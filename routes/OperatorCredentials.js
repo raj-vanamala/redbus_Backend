@@ -16,42 +16,67 @@ router.post('/signUp',async function(req,res){
       let url = process.env.URL;
       let client = await MongoDb.connect(url);
       let db = await client.db("Redbus");
-    
-      let data = await db.collection("BusOperators").insertOne({
 
-        "Name" : req.body.name,
-        "Email" : req.body.email,
-        "Mobile" : req.body.mobile,
-        "TravelsName": req.body.travelName,
-        "Password" : req.body.password
-      })
+      let operatorEmailExist = await db.collection("BusOperators").find({"Email" : req.body.email}).toArray();
+      let operatorNameExist = await db.collection("BusOperators").find({"TravelsName" : req.body.travelsName}).toArray();
 
-      let jwtToken = await jwt.sign({email : req.body.email,Name : req.body.name},process.env.JWT,{expiresIn : "1h"}) 
-      await client.close();
-      
-      let operatorDetails  = {
-        
-        "Name" : req.body.name,
-        "Email" : req.body.email,
-        "Mobile" : req.body.mobile,
-        "TravelsName" : req.body.travelName
+      console.log(operatorEmailExist.length);
+      console.log(operatorNameExist.length);
+
+      if(operatorEmailExist.length !== 0) {
+
+        res.json({
+          "message" : "Email Already Exist",
+          "status" : "unSuccessful"
+        })
+
       }
 
+      else if(operatorNameExist.length !== 0){
 
-      res.json({
-        "token" : jwtToken,
-        "message" : "Registration Successful",
-        "status" : "success",
-        "userDetails" : operatorDetails
-      })
+        res.json({
+          "message" : "Travels Name Already Exist",
+          "status" : "unSuccessful"
+        })
+
+      }
+    
+      else {
+        let data = await db.collection("BusOperators").insertOne({
+
+          "Name" : req.body.name,
+          "Email" : req.body.email,
+          "Mobile" : req.body.mobile,
+          "TravelsName": req.body.travelsName,
+          "Password" : req.body.password
+        })
+  
+        let jwtToken = await jwt.sign({email : req.body.email,Name : req.body.name},process.env.JWT,{expiresIn : "1h"}) 
+        await client.close();
+        
+        let operatorDetails  = {
+          
+          "Name" : req.body.name,
+          "Email" : req.body.email,
+          "Mobile" : req.body.mobile,
+          "TravelsName" : req.body.travelName
+        }
+  
+  
+        res.json({
+          "token" : jwtToken,
+          "message" : "Registration Successful",
+          "status" : "success",
+          "userDetails" : operatorDetails
+        })
+      }
     
     } catch (error) {
       console.log(error);
     }
 })
 
-router.post('/signIn',async function(req,res){
-
+router.post('/signIn/',async function(req,res){
 
     try {
   
@@ -59,10 +84,9 @@ router.post('/signIn',async function(req,res){
       let client = await MongoDb.connect(url);
       let db = await client.db("Redbus");
   
-        let operator = await db.collection("BusOperators").findOne({email : req.body.email})
+        let operator = await db.collection("BusOperators").findOne({Email : req.body.email})
   
-        console.log(req.body.password)
-        let result = await bcrypt.compare(req.body.password,operator.password)
+        let result = await bcrypt.compare(req.body.password,operator.Password)
         if(result === true) {
           
           let jwtToken = await jwt.sign({Email : req.body.email,Name : operator.Name},process.env.JWT,{expiresIn : "1h"})
@@ -70,14 +94,14 @@ router.post('/signIn',async function(req,res){
           res.json({
             "token" : jwtToken,
             "message" : "Authentication Successful",
-            "status" : "Successful",
+            "status" : "success",
             "operatorDetails" : operator
           })
   
         } else {
   
           res.json({
-            message : "Password does not match",
+            message : "Please Check Your Credentials",
             "status" : "Not Successful"
           })
   
