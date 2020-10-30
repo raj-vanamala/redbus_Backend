@@ -5,7 +5,7 @@ const MongoDb = require('mongodb');
 var jwt = require('jsonwebtoken');
 const dotenv = require('dotenv').config();
 
-router.post('/signUp',async function(req,res){
+router.post('/operatorCredentials/signUp',async function(req,res){
 
     try {
 
@@ -76,7 +76,7 @@ router.post('/signUp',async function(req,res){
     }
 })
 
-router.post('/signIn/',async function(req,res){
+router.post('/operatorCredentials/signIn/',async function(req,res){
 
     try {
   
